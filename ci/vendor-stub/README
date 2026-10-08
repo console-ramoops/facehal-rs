@@ -1,0 +1,2 @@
+# Link-only stub (SONAME + symbols) for CI linking.
+# Content is irrelevant at runtime (device provides the real lib).
