@@ -84,7 +84,13 @@ struct WorkerRequest {
     int32_t timeoutMs;
 };
 
-#if defined(FACEHAL_VENDOR_CAMERA_NDK)
+// Mi8937: the vendor native-handle capture path yields black frames here,
+// and available libcamera2ndk_vendor builds lack the
+// AImageReader_getWindowNativeHandle symbol. Use the standard ANativeWindow
+// path only.
+#define FACEHAL_SKIP_VENDOR_HANDLE 1
+
+#if defined(FACEHAL_VENDOR_CAMERA_NDK) && !defined(FACEHAL_SKIP_VENDOR_HANDLE)
 struct NativeHandleHeader {
     int32_t version;
     int32_t numFds;
@@ -530,7 +536,7 @@ bool initialize(
     }
     ANativeWindow_acquire(camera->window);
     void* cameraOutputWindow = camera->window;
-#if defined(FACEHAL_VENDOR_CAMERA_NDK)
+#if defined(FACEHAL_VENDOR_CAMERA_NDK) && !defined(FACEHAL_SKIP_VENDOR_HANDLE)
     void* vendorWindowHandle = nullptr;
 #if defined(__ANDROID_VNDK__)
     native_handle_t* platformWindowHandle = nullptr;
@@ -558,6 +564,13 @@ bool initialize(
     } else {
         std::fprintf(stderr, "FaceHAL camera worker v2: using standard ANativeWindow ABI\n");
     }
+#elif defined(FACEHAL_SKIP_VENDOR_HANDLE)
+    if (windowMode == kWindowModeVendorHandle) {
+        std::fprintf(
+                stderr, "FaceHAL camera worker v2: vendor handle mode skipped\n");
+        return false;
+    }
+    std::fprintf(stderr, "FaceHAL camera worker v2: using standard ANativeWindow ABI\n");
 #endif
 #if defined(FACEHAL_VENDOR_CAMERA_NDK) && defined(__ANDROID_VNDK__)
     auto* captureWindow = static_cast<native_handle_t*>(cameraOutputWindow);

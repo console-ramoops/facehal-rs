@@ -56,7 +56,7 @@ jobs:
 
       - name: Build production HAL
         env:
-          ANDROID_SYSTEM_LIB64: ${{ github.workspace }}/android-ndk-r27/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/${{ inputs.min_sdk || '33' }}
+          ANDROID_SYSTEM_LIB64: ${{ github.workspace }}/android-ndk-r27/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/35
           ANDROID_VENDOR_LIB64: ${{ github.workspace }}/ci/vendor-stub
         run: sh scripts/build-production.sh
 
