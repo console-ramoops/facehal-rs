@@ -36,7 +36,9 @@ jobs:
         env:
           ANDROID_SYSTEM_LIB64: ${{ github.workspace }}/android-ndk-r27d/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/${{ inputs.min_sdk || '33' }}
           ANDROID_VENDOR_LIB64: ${{ github.workspace }}/ci/vendor-stub
-        run: sh scripts/build-production.sh
+        run: |
+          echo "LIBCLANG_PATH=$(dirname $(find $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64 -name 'libclang.so*' | head -1))" >> $GITHUB_ENV
+          sh scripts/build-production.sh
 
       - name: Upload HAL binary
         uses: actions/upload-artifact@v4
