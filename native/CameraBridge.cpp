@@ -60,6 +60,12 @@ constexpr int32_t kCandidateProbeTimeoutMs = 2'000;
 constexpr int32_t kCandidateProbeFrames = 4;
 constexpr int32_t kWorkerExitTimeoutMs = 2'000;
 constexpr int32_t kReaderMaxImages = 4;
+#if __ANDROID_API__ >= 33
+// Gralloc consumer-usage values (hardware/gralloc.h is unavailable in the NDK).
+constexpr uint64_t kReaderUsageSwReadOften = 0x00000003U;
+constexpr uint64_t kReaderUsageHwTexture = 0x00000100U;
+constexpr uint64_t kReaderUsageHwCameraWrite = 0x00020000U;
+#endif
 constexpr size_t kMaxSizesPerCamera = 3;
 constexpr size_t kMaxCameraCandidates = 5;
 constexpr int32_t kWindowModeVendorHandle = 0;
@@ -488,27 +494,27 @@ bool initialize(
     // Mi8937/mm-camera quirk: the default ImageReader consumer usage yields
     // zeroed frames. Request stock-like GPU consumer usage so the HAL fills
     // the buffers, while keeping CPU read access for the algorithm.
+    bool readerReady = false;
+#if __ANDROID_API__ >= 33
 #if defined(FACEHAL_READER_USAGE)
     const uint64_t readerUsage = FACEHAL_READER_USAGE;
 #else
-    const uint64_t readerUsage = AHARDWAREBUFFER_USAGE_CAMERA_WRITE |
-            AHARDWAREBUFFER_USAGE_HW_TEXTURE | AHARDWAREBUFFER_USAGE_SW_READ_OFTEN;
+    const uint64_t readerUsage =
+            kReaderUsageHwCameraWrite | kReaderUsageHwTexture | kReaderUsageSwReadOften;
 #endif
-    media_status_t readerStatus = -1;
-#if __ANDROID_API__ >= 33
-    readerStatus = AImageReader_newWithUsage(
+    readerReady = AImageReader_newWithUsage(
             camera->captureWidth, camera->captureHeight, AIMAGE_FORMAT_YUV_420_888,
-            kReaderMaxImages, readerUsage, &camera->reader);
+            kReaderMaxImages, readerUsage, &camera->reader) == AMEDIA_OK;
 #endif
-    if (readerStatus != AMEDIA_OK) {
+    if (!readerReady) {
         if (AImageReader_new(camera->captureWidth, camera->captureHeight,
                              AIMAGE_FORMAT_YUV_420_888, kReaderMaxImages,
                              &camera->reader) != AMEDIA_OK) {
             camera->reader = nullptr;
         }
-        readerStatus = camera->reader != nullptr ? AMEDIA_OK : -1;
+        readerReady = camera->reader != nullptr;
     }
-    if (readerStatus != AMEDIA_OK || camera->reader == nullptr) {
+    if (!readerReady || camera->reader == nullptr) {
         std::fprintf(stderr, "FaceHAL camera worker v2: AImageReader_new failed\n");
         return false;
     }
