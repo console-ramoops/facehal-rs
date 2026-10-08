@@ -29,6 +29,9 @@ jobs:
           unzip -q ndk.zip
           ls android-ndk-r27d/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang++
 
+      - name: Prefetch crates (warm offline cache)
+        run: cd standalone-build && cargo fetch
+
       - name: Build production HAL
         run: sh scripts/build-production.sh
 
