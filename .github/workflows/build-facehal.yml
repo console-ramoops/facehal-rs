@@ -37,7 +37,9 @@ jobs:
           ANDROID_SYSTEM_LIB64: ${{ github.workspace }}/android-ndk-r25c/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/${{ inputs.min_sdk || '33' }}
           ANDROID_VENDOR_LIB64: ${{ github.workspace }}/ci/vendor-stub
         run: |
-          LIBDIR=$(dirname $(find $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64 -name 'libclang.so' | head -1))
+          LIBCAND=$(find $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64 -name 'libclang.so*' -not -path '*musl*' | head -1)
+          LIBDIR=$(dirname "$LIBCAND")
+          echo "libclang candidate: $LIBCAND"
           echo "libclang dir: $LIBDIR"
           ls "$LIBDIR"/libclang.so
           export LIBCLANG_PATH="$LIBDIR"
