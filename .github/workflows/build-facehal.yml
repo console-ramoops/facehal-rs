@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      ANDROID_NDK_HOME: ${{ github.workspace }}/android-ndk-r25c
+      ANDROID_NDK_HOME: ${{ github.workspace }}/android-ndk-r27
       FACEHAL_MIN_SDK: ${{ inputs.min_sdk || '33' }}
     steps:
       - uses: actions/checkout@v4
@@ -26,8 +26,8 @@ jobs:
       - name: Cache NDK
         uses: actions/cache@v4
         with:
-          path: android-ndk-r25c
-          key: ndk-r25c
+          path: android-ndk-r27
+          key: ndk-r27
 
       - name: Cache cargo
         uses: actions/cache@v4
@@ -39,18 +39,18 @@ jobs:
 
       - name: Download Android NDK r25c
         run: |
-          if [ ! -x android-ndk-r25c/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang++ ]; then
-            curl -sL -o ndk.zip https://dl.google.com/android/repository/android-ndk-r25c-linux.zip
+          if [ ! -x android-ndk-r27/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang++ ]; then
+            curl -sL -o ndk.zip https://dl.google.com/android/repository/android-ndk-r27-linux.zip
             unzip -q ndk.zip
           fi
-          ls android-ndk-r25c/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang++
+          ls android-ndk-r27/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang++
 
       - name: Prefetch crates (warm offline cache)
         run: cd standalone-build && cargo fetch
 
       - name: Build production HAL
         env:
-          ANDROID_SYSTEM_LIB64: ${{ github.workspace }}/android-ndk-r25c/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/${{ inputs.min_sdk || '33' }}
+          ANDROID_SYSTEM_LIB64: ${{ github.workspace }}/android-ndk-r27/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/${{ inputs.min_sdk || '33' }}
           ANDROID_VENDOR_LIB64: ${{ github.workspace }}/ci/vendor-stub
         run: |
           LIBCAND=$(find $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64 -name 'libclang.so*' -not -path '*musl*' | head -1)
