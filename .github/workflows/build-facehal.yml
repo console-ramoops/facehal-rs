@@ -1,0 +1,39 @@
+name: Build facehal
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      min_sdk:
+        description: 'FACEHAL_MIN_SDK (needs 33+ for AImageReader usage fix)'
+        default: '33'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_NDK_HOME: ${{ github.workspace }}/android-ndk-r27d
+      FACEHAL_MIN_SDK: ${{ inputs.min_sdk || '33' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - name: Download Android NDK r27d
+        run: |
+          curl -sL -o ndk.zip https://dl.google.com/android/repository/android-ndk-r27d-linux.zip
+          unzip -q ndk.zip
+          ls android-ndk-r27d/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang++
+
+      - name: Build production HAL
+        run: sh scripts/build-production.sh
+
+      - name: Upload HAL binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: facehal-binary
+          path: android.hardware.biometrics.face-service.facehal
